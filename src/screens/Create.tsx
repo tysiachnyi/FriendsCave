@@ -1,18 +1,16 @@
 import { useState } from "react";
-import { BackButton } from "../components/BackButton";
 
 interface CreateProps {
-  onBack: () => void;
   onCreate?: (data: { name: string; description: string }) => void;
 }
 
-export const Create = ({ onBack, onCreate }: CreateProps) => {
+export const Create = ({ onCreate }: CreateProps) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!name.trim()) {
       setError("Name is required");
       return;
@@ -21,6 +19,11 @@ export const Create = ({ onBack, onCreate }: CreateProps) => {
     const code = Math.random().toString(36).substring(2, 10).toUpperCase();
     setGeneratedCode(code);
     onCreate?.({ name: name.trim(), description: description.trim() });
+    await window.store.set("roomData", {
+      name: name.trim(),
+      description: description.trim(),
+      code,
+    });
   };
 
   const handleCopy = async () => {
@@ -34,8 +37,7 @@ export const Create = ({ onBack, onCreate }: CreateProps) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6">
-      <BackButton onClick={onBack} />
+    <>
       {!generatedCode && (
         <div className="w-full flex flex-col items-center">
           <h2 className="text-4xl font-bold mb-4">Create a Cave</h2>
@@ -96,6 +98,6 @@ export const Create = ({ onBack, onCreate }: CreateProps) => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };

@@ -1,9 +1,9 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
+import Store from "electron-store";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
 // The built directory structure
 //
 // ├─┬─┬ dist
@@ -25,6 +25,50 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   : RENDERER_DIST;
 
 let win: BrowserWindow | null;
+
+// -------------------- Persistent Store (electron-store) --------------------
+// Define a schema (optional but helps with autocompletion & validation)
+type AppStoreSchema = {
+  username?: string;
+  lastScreen?: string; // tracks last visited UI screen
+  rooms?: string[]; // example: cached list of joined room codes
+};
+
+// Create the store instance. The file will be saved inside userData folder.
+const store = new Store<AppStoreSchema>({ name: "friendscave" });
+
+// IPC handlers to access the store from the renderer via `ipcRenderer.invoke`
+ipcMain.handle("store:get", (_e, key: keyof AppStoreSchema | string) => {
+  return store.get(key as keyof AppStoreSchema);
+});
+
+ipcMain.handle(
+  "store:set",
+  (
+    _e,
+    key: keyof AppStoreSchema | string,
+    value: AppStoreSchema[keyof AppStoreSchema]
+  ) => {
+    store.set(key as keyof AppStoreSchema, value);
+    return value;
+  }
+);
+
+ipcMain.handle("store:has", (_e, key: keyof AppStoreSchema | string) => {
+  return store.has(key as keyof AppStoreSchema);
+});
+
+ipcMain.handle("store:delete", (_e, key: keyof AppStoreSchema | string) => {
+  store.delete(key as keyof AppStoreSchema);
+});
+
+ipcMain.handle("store:clear", () => {
+  store.clear();
+});
+
+ipcMain.handle("store:keys", () => {
+  return Object.keys(store.store);
+});
 
 function createWindow() {
   win = new BrowserWindow({

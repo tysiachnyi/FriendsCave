@@ -3,8 +3,13 @@ import { Home } from "./screens/Home";
 import { Join } from "./screens/Join";
 import { Create } from "./screens/Create";
 import "./App.css";
+import { Room } from "./screens/Room";
+import { BackButton } from "./components/BackButton";
+import { Container } from "./components/Container";
 
-type Screen = "home" | "join" | "create";
+// First run at: 2025-09-05T13:39:24.161Z
+
+type Screen = "home" | "join" | "create" | "room";
 
 function App() {
   const [screen, setScreen] = useState<Screen>("home");
@@ -13,19 +18,15 @@ function App() {
 
   return (
     <>
-      {screen === "home" && <Home onNavigate={(s) => setScreen(s)} />}
-      {screen === "join" && (
-        <Join
-          onBack={toHome}
-          onSubmitCode={(c) => console.log("join with code", c)}
-        />
+      {screen !== "home" && screen !== "room" && (
+        <BackButton onClick={toHome} />
       )}
-      {screen === "create" && (
-        <Create
-          onBack={toHome}
-          onCreate={(data) => console.log("create cave", data)}
-        />
-      )}
+      <Container>
+        {screen === "home" && <Home onNavigate={(s) => setScreen(s)} />}
+        {screen === "join" && <Join onSubmitCode={() => setScreen("room")} />}
+        {screen === "create" && <Create onCreate={() => setScreen("room")} />}
+        {screen === "room" && <Room toHome={toHome} />}
+      </Container>
     </>
   );
 }
